@@ -1,6 +1,44 @@
 # 命令解释器
 
-这是`UNIX环境高级编程的期末作业`，完成了几个简单的任务要求。
+这是`UNIX环境高级编程的期末作业`，完成了几个简单的任务要求。该作业主要是在UNIX环境高级编程Figure 1.10的基础上更改的：
+
+```c
+#include "apue.h"
+#include <sys/wait.h>
+
+static void sig_int(int);     /* our signal-catching function */
+
+int main(void) {
+    char   buf[MAXLINE];      /* from apue.h */
+    pid_t  pid;
+    int    status;
+    
+    if (signal(SIGINT, sig_int) == SIG_ERR)
+        err_sys("signal error\n");
+    
+    printf("%% ");
+    while (fgets(buf, MAXLINE, stdin) != NULL) {
+        if (buf[strlen(buf) - 1] == '\n')
+            buf[strlen(buf - 1)] = 0；/* replace new line with null */
+        if ((pid = fork()) < 0) {
+            err_sys("fork error");
+        } else if (pid == 0) { /* child */
+            execlp(buf, buf, (char *)0);
+            err_ret("couldn't execute: %s", buf);
+            exit(127);
+        }
+        
+        if ((pid == waitpid(pid, &status, 0)) < 0) /* parent */
+            err_sys("waitpid error");
+        printf("%% ");
+    }
+    exit(0);
+}
+
+void sig_int(int signo) {
+    printf("interrupt\n %% ");
+}
+```
 
 ## 1. 功能
 
@@ -44,7 +82,7 @@ export promot="->"
 
 #### 3.3 后台运行
 
-使用`bg`命令可以让程序在后台执行，为了可以判断程序正确在后台运行，我们使用src文件夹下的test.py文件来做测试，该文件是一个简单的服务器，监控本地的1080端口，在后台运行时，依旧可以获取请求。
+使用`bg`命令可以让程序在后台执行，为了可以判断程序正确在后台运行，我们使用src文件夹下的test.py文件来做测试，该文件是一个简单的服务器，监控本地的8080端口，在后台运行时，依旧可以获取请求。
 
 首先，我们在前台运行test.py，可以发现使用wget可以获得test.py的输出，接下来我们使用ctrl c快捷键终止掉在前台运行的test.py程序，此时使用wget无法获得结果，然后我们使用bg命令让test.py在后台运行，可以发现此时wget可以获得test.py的输出了，而且命令解释器依旧可以执行其他的命令。
 
